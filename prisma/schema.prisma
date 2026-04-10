@@ -1,0 +1,38 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "sqlserver"
+}
+
+model Role {
+    id              Int              @id @default(autoincrement())
+    name            String           @unique
+    description     String?
+    isActive        Boolean          @default(true)
+    createdAt       DateTime         @default(now())
+    updatedAt       DateTime         @updatedAt
+    rolePermissions RolePermission[]
+}
+
+model Permission {
+    id              Int              @id @default(autoincrement())
+    key             String           @unique
+    displayName     String
+    category        String?
+    createdAt       DateTime         @default(now())
+    updatedAt       DateTime         @updatedAt
+    rolePermissions RolePermission[]
+}
+
+model RolePermission {
+    roleId       Int
+    permissionId Int
+    createdAt    DateTime @default(now())
+
+    role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+    permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+    @@id([roleId, permissionId])
+}
