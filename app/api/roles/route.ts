@@ -13,6 +13,12 @@ function normalizePermissionKey(value: string) {
     .replace(/^_+|_+$/g, "");
 }
 
+function inferSystemName(label: string) {
+  const [systemName] = label.split(":");
+  const normalized = systemName?.trim();
+  return normalized || "General";
+}
+
 async function upsertPermissions(permissionLabels: string[]) {
   const uniqueLabels = [
     ...new Set(permissionLabels.map((label) => label.trim()).filter(Boolean)),
@@ -21,15 +27,22 @@ async function upsertPermissions(permissionLabels: string[]) {
   return Promise.all(
     uniqueLabels.map(async (label) => {
       const key = normalizePermissionKey(label);
+      const system = await db.system.upsert({
+        where: { name: inferSystemName(label) },
+        update: { isActive: true },
+        create: { name: inferSystemName(label), isActive: true },
+      });
 
       return db.permission.upsert({
         where: { key },
         update: {
           displayName: label,
+          systemId: system.id,
         },
         create: {
           key,
           displayName: label,
+          systemId: system.id,
         },
       });
     }),

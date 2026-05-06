@@ -1,9 +1,26 @@
 import path from "node:path";
 import fs from "node:fs";
 import * as XLSX from "xlsx";
+import { config } from "dotenv";
 import { PrismaClient } from "@prisma/client";
+import { PrismaMssql } from "@prisma/adapter-mssql";
 
-const prisma = new PrismaClient();
+if (!process.env.DATABASE_URL) {
+  config({
+    path: [
+      path.join(process.cwd(), ".env.local"),
+      path.join(process.cwd(), ".env"),
+    ],
+  });
+}
+
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL is required to run seed.");
+}
+
+const prisma = new PrismaClient({
+  adapter: new PrismaMssql(process.env.DATABASE_URL),
+});
 
 const ROLE_SHEET_NAME = "RBAC";
 const ROLE_NAME_COLUMN = "Job Role Group";

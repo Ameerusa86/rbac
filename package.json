@@ -7,14 +7,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:generate": "dotenv -o -e .env.local -- prisma generate",
-    "db:migrate": "dotenv -o -e .env.local -- prisma migrate dev --name init_roles",
-    "db:push": "dotenv -o -e .env.local -- prisma db push --skip-generate",
+    "db:generate": "dotenv -o -e .env.local -e .env -- prisma generate",
+    "db:migrate": "dotenv -o -e .env.local -e .env -- prisma migrate dev --name init_roles",
+    "db:push": "dotenv -o -e .env.local -e .env -- prisma db push --skip-generate",
     "seed": "pnpm db:seed",
-    "db:seed": "dotenv -o -e .env.local -- prisma db seed"
+    "db:seed": "dotenv -o -e .env.local -e .env -- prisma db seed"
   },
   "dependencies": {
-    "@prisma/client": "6.16.2",
+    "@prisma/adapter-mssql": "7.8.0",
+    "@prisma/client": "7.8.0",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -40,7 +41,7 @@
     "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.3",
-    "prisma": "6.16.2",
+    "prisma": "7.8.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"
