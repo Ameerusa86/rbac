@@ -10,6 +10,7 @@
     "db:generate": "dotenv -o -e .env.local -- prisma generate",
     "db:migrate": "dotenv -o -e .env.local -- prisma migrate dev --name init_roles",
     "db:push": "dotenv -o -e .env.local -- prisma db push --skip-generate",
+    "seed": "pnpm db:seed",
     "db:seed": "dotenv -o -e .env.local -- prisma db seed"
   },
   "dependencies": {

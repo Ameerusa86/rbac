@@ -4,10 +4,13 @@ import * as XLSX from "xlsx";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
+
 const ROLE_SHEET_NAME = "RBAC";
 const ROLE_NAME_COLUMN = "Job Role Group";
 const DESCRIPTION_COLUMNS = ["Default Manager", "Existing Role in Paylocity?"];
+
 const IGNORED_COLUMNS = new Set([ROLE_NAME_COLUMN, ...DESCRIPTION_COLUMNS]);
+
 const EMPTY_PERMISSION_VALUES = new Set([
   "",
   "-",
@@ -32,10 +35,7 @@ function normalizePermissionKey(value: string) {
 }
 
 function readCell(value: unknown) {
-  if (value == null) {
-    return "";
-  }
-
+  if (value == null) return "";
   return String(value).trim();
 }
 
@@ -70,38 +70,41 @@ function buildPermissionLabel(column: string, value: string) {
   return `${column}: ${value.trim()}`;
 }
 
+type ExtractedPermission = {
+  key: string;
+  displayName: string;
+  systemName: string;
+};
+
 function extractPermissions(row: Record<string, unknown>) {
-  const permissions = new Map<
-    string,
-    { key: string; displayName: string; category: string }
-  >();
+  const permissions = new Map<string, ExtractedPermission>();
 
   for (const [column, rawValue] of Object.entries(row)) {
-    if (IGNORED_COLUMNS.has(column)) {
-      continue;
-    }
+    if (IGNORED_COLUMNS.has(column)) continue;
 
     if (typeof rawValue === "boolean") {
       if (rawValue) {
         const displayName = column;
-        const key = normalizePermissionKey(displayName);
-        permissions.set(key, { key, displayName, category: column });
+        const key = normalizePermissionKey(column);
+
+        permissions.set(key, {
+          key,
+          displayName,
+          systemName: column,
+        });
       }
 
       continue;
     }
 
     const cellValue = readCell(rawValue);
-    if (!cellValue) {
-      continue;
-    }
+    if (!cellValue) continue;
 
     const values = splitPermissionValues(cellValue).filter(
       isMeaningfulPermissionValue,
     );
-    if (values.length === 0) {
-      continue;
-    }
+
+    if (values.length === 0) continue;
 
     for (const value of values) {
       const displayName = buildPermissionLabel(column, value);
@@ -110,7 +113,7 @@ function extractPermissions(row: Record<string, unknown>) {
       permissions.set(key, {
         key,
         displayName,
-        category: column,
+        systemName: column,
       });
     }
   }
@@ -128,6 +131,7 @@ async function main() {
   }
 
   const workbook = XLSX.readFile(filePath);
+
   const sheetName = workbook.SheetNames.includes(ROLE_SHEET_NAME)
     ? ROLE_SHEET_NAME
     : workbook.SheetNames[0];
@@ -137,6 +141,7 @@ async function main() {
   }
 
   const sheet = workbook.Sheets[sheetName];
+
   const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
     defval: "",
   });
@@ -145,24 +150,20 @@ async function main() {
     string,
     {
       description: string | null;
-      permissions: Map<
-        string,
-        { key: string; displayName: string; category: string }
-      >;
+      permissions: Map<string, ExtractedPermission>;
     }
   >();
 
   for (const row of rows) {
     const roleName = readCell(row[ROLE_NAME_COLUMN]);
-    if (!roleName) {
-      continue;
-    }
+    if (!roleName) continue;
 
     const description = buildDescription(row);
     const permissionEntries = extractPermissions(row);
+
     const existingRole = roles.get(roleName) ?? {
       description: null,
-      permissions: new Map(),
+      permissions: new Map<string, ExtractedPermission>(),
     };
 
     if (!existingRole.description && description) {
@@ -177,7 +178,9 @@ async function main() {
   }
 
   let importedRoles = 0;
+  let importedSystems = 0;
   let importedPermissions = 0;
+  let importedRolePermissionLinks = 0;
 
   for (const [roleName, roleData] of roles) {
     const permissionEntries = [...roleData.permissions.values()];
@@ -186,26 +189,43 @@ async function main() {
       where: { name: roleName },
       update: {
         description: roleData.description,
+        isActive: true,
       },
       create: {
         name: roleName,
         description: roleData.description,
+        isActive: true,
       },
     });
 
-    await prisma.rolePermission.deleteMany({ where: { roleId: role.id } });
+    await prisma.rolePermission.deleteMany({
+      where: { roleId: role.id },
+    });
 
     for (const permissionEntry of permissionEntries) {
+      const system = await prisma.system.upsert({
+        where: { name: permissionEntry.systemName },
+        update: {
+          isActive: true,
+        },
+        create: {
+          name: permissionEntry.systemName,
+          isActive: true,
+        },
+      });
+
+      importedSystems += 1;
+
       const permission = await prisma.permission.upsert({
         where: { key: permissionEntry.key },
         update: {
           displayName: permissionEntry.displayName,
-          category: permissionEntry.category,
+          systemId: system.id,
         },
         create: {
           key: permissionEntry.key,
           displayName: permissionEntry.displayName,
-          category: permissionEntry.category,
+          systemId: system.id,
         },
       });
 
@@ -215,19 +235,25 @@ async function main() {
           permissionId: permission.id,
         },
       });
+
+      importedPermissions += 1;
+      importedRolePermissionLinks += 1;
     }
 
     importedRoles += 1;
-    importedPermissions += permissionEntries.length;
   }
 
-  console.log(
-    `Seed completed from sheet: ${sheetName}. Imported ${importedRoles} roles and ${importedPermissions} role-permission links.`,
-  );
+  console.log("Seed completed successfully.");
+  console.log(`Sheet: ${sheetName}`);
+  console.log(`Roles imported: ${importedRoles}`);
+  console.log(`Systems touched: ${importedSystems}`);
+  console.log(`Permissions touched: ${importedPermissions}`);
+  console.log(`Role-permission links created: ${importedRolePermissionLinks}`);
 }
 
 main()
   .catch((error) => {
+    console.error("Seed failed:");
     console.error(error);
     process.exit(1);
   })

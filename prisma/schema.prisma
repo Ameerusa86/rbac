@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
     provider = "sqlserver"
+    url      = env("DATABASE_URL")
 }
 
 model Role {
@@ -16,13 +17,26 @@ model Role {
     rolePermissions RolePermission[]
 }
 
+model System {
+    id          Int          @id @default(autoincrement())
+    name        String       @unique
+    description String?
+    isActive    Boolean      @default(true)
+    createdAt   DateTime     @default(now())
+    updatedAt   DateTime     @updatedAt
+    permissions Permission[]
+}
+
 model Permission {
-    id              Int              @id @default(autoincrement())
-    key             String           @unique
-    displayName     String
-    category        String?
-    createdAt       DateTime         @default(now())
-    updatedAt       DateTime         @updatedAt
+    id          Int      @id @default(autoincrement())
+    key         String   @unique
+    displayName String
+    description String?
+    systemId    Int
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    system          System           @relation(fields: [systemId], references: [id], onDelete: Cascade)
     rolePermissions RolePermission[]
 }
 
