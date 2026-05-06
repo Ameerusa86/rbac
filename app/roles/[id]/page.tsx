@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { formatPermissionLabel } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CheckCircle2, KeyRound, XCircle } from "lucide-react";
@@ -38,7 +39,7 @@ export default async function RoleDetailsPage({ params }: PageProps) {
   >((groups, rp) => {
     const sys = rp.permission.system.name;
     if (!groups[sys]) groups[sys] = [];
-    groups[sys].push(rp.permission.displayName);
+    groups[sys].push(formatPermissionLabel(rp.permission.displayName, sys));
     return groups;
   }, {});
 

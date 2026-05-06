@@ -63,7 +63,7 @@ export function RoleMatrixTable({ roles, systems }: RoleMatrixTableProps) {
         <SearchInput
           value={search}
           onChange={setSearch}
-          placeholder="Search rolesâ€¦"
+          placeholder="Search roles"
         />
 
         <select

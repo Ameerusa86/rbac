@@ -142,18 +142,21 @@ export function EditRoleDialog({ role, permissions }: EditRoleDialogProps) {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
           onMouseDown={(e) => e.target === e.currentTarget && handleClose()}
         >
-          <div className="flex h-[88vh] w-full max-w-3xl flex-col rounded-2xl border bg-card shadow-2xl">
+          <div className="flex h-[88vh] w-full max-w-5xl flex-col rounded-2xl border bg-card shadow-2xl">
             {/* ── Header ── */}
             <div className="flex shrink-0 items-center justify-between border-b px-6 py-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                   <PencilLine className="h-4 w-4 text-primary" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h2 className="text-sm font-semibold leading-none">
                     Edit Role
                   </h2>
-                  <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
+                  <p
+                    className="mt-1 text-xs text-muted-foreground break-words"
+                    title={role.name}
+                  >
                     {role.name}
                   </p>
                 </div>
@@ -171,7 +174,7 @@ export function EditRoleDialog({ role, permissions }: EditRoleDialogProps) {
             {/* ── Two-panel body ── */}
             <div className="flex min-h-0 flex-1 divide-x">
               {/* Left — role details */}
-              <div className="flex w-72 shrink-0 flex-col gap-5 overflow-y-auto p-6">
+              <div className="flex w-80 shrink-0 flex-col gap-5 overflow-y-auto p-6 lg:w-96">
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Role Name
@@ -330,7 +333,7 @@ export function EditRoleDialog({ role, permissions }: EditRoleDialogProps) {
                           </div>
 
                           {/* Permission checkboxes */}
-                          <div className="grid gap-1.5 sm:grid-cols-2">
+                          <div className="grid gap-2 lg:grid-cols-2">
                             {systemPerms.map((p) => {
                               const checked = selectedPermissionIds.includes(
                                 p.id,
@@ -350,7 +353,11 @@ export function EditRoleDialog({ role, permissions }: EditRoleDialogProps) {
                                     onChange={() => togglePermission(p.id)}
                                     className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded accent-primary"
                                   />
-                                  <span className="leading-snug">
+                                  <span
+                                    className="leading-snug break-words"
+                                    style={{ overflowWrap: "anywhere" }}
+                                    title={p.displayName}
+                                  >
                                     {p.displayName}
                                   </span>
                                 </label>

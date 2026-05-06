@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { formatPermissionLabel } from "@/lib/utils";
 
 export default async function PermissionsPage() {
   const permissions = await db.permission.findMany({
@@ -47,7 +48,9 @@ export default async function PermissionsPage() {
                     {p.system.name}
                   </span>
                 </td>
-                <td className="px-4 py-3 font-medium">{p.displayName}</td>
+                <td className="px-4 py-3 font-medium">
+                  {formatPermissionLabel(p.displayName, p.system.name)}
+                </td>
                 <td className="px-4 py-3">
                   <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium">
                     {p._count.rolePermissions}

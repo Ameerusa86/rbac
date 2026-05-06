@@ -66,7 +66,7 @@ export function RolesTable({ roles, systems, permissions }: RolesTableProps) {
         <SearchInput
           value={search}
           onChange={setSearch}
-          placeholder="Search roles or descriptionsâ€¦"
+          placeholder="Search roles or descriptions"
         />
 
         <select

@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { RolesTable } from "@/components/rbac/roles-table";
+import { formatPermissionLabel } from "@/lib/utils";
 
 export default async function RolesPage() {
   const roles = await db.role.findMany({
@@ -33,7 +34,7 @@ export default async function RolesPage() {
 
   const formattedPermissions = permissions.map((p) => ({
     id: p.id,
-    displayName: p.displayName,
+    displayName: formatPermissionLabel(p.displayName, p.system.name),
     systemName: p.system.name,
   }));
 

@@ -1,5 +1,6 @@
 import { RoleMatrixTable } from "@/components/rbac/role-matrix-table";
 import { db } from "@/lib/db";
+import { formatPermissionLabel } from "@/lib/utils";
 
 export default async function RoleMatrixPage() {
   const roles = await db.role.findMany({
@@ -30,7 +31,10 @@ export default async function RoleMatrixPage() {
 
     for (const rolePermission of role.rolePermissions) {
       const systemName = rolePermission.permission.system.name;
-      const permissionName = rolePermission.permission.displayName;
+      const permissionName = formatPermissionLabel(
+        rolePermission.permission.displayName,
+        systemName,
+      );
 
       if (!systemMap.has(systemName)) {
         systemMap.set(systemName, []);
