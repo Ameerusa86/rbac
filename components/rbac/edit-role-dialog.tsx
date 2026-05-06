@@ -74,7 +74,11 @@ export function EditRoleDialog({ role, permissions }: EditRoleDialogProps) {
   function handleOpen() {
     setName(role.name);
     const rawDesc = role.description ?? "";
-    setDescription(rawDesc.startsWith("Default Manager: ") ? rawDesc.slice("Default Manager: ".length) : rawDesc);
+    setDescription(
+      rawDesc.startsWith("Default Manager: ")
+        ? rawDesc.slice("Default Manager: ".length)
+        : rawDesc,
+    );
     setIsActive(role.isActive);
     setSelectedPermissionIds(role.permissionIds);
     setPermissionSearch("");
