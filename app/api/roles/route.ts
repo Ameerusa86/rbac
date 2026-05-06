@@ -5,6 +5,13 @@ import { db } from "@/lib/db";
 import { enforceManagerAccess } from "@/lib/auth/manager-guard";
 import { createRoleSchema } from "@/lib/validation/roles";
 
+class InactiveSystemError extends Error {
+  constructor(systemName: string) {
+    super(`System \"${systemName}\" is inactive and cannot be assigned.`);
+    this.name = "InactiveSystemError";
+  }
+}
+
 function normalizePermissionKey(value: string) {
   return value
     .trim()
@@ -27,11 +34,23 @@ async function upsertPermissions(permissionLabels: string[]) {
   return Promise.all(
     uniqueLabels.map(async (label) => {
       const key = normalizePermissionKey(label);
-      const system = await db.system.upsert({
-        where: { name: inferSystemName(label) },
-        update: { isActive: true },
-        create: { name: inferSystemName(label), isActive: true },
+      const systemName = inferSystemName(label);
+
+      const existingSystem = await db.system.findUnique({
+        where: { name: systemName },
+        select: { id: true, isActive: true, name: true },
       });
+
+      if (existingSystem && !existingSystem.isActive) {
+        throw new InactiveSystemError(existingSystem.name);
+      }
+
+      const system =
+        existingSystem ??
+        (await db.system.create({
+          data: { name: systemName, isActive: true },
+          select: { id: true },
+        }));
 
       return db.permission.upsert({
         where: { key },
@@ -128,6 +147,10 @@ export async function POST(request: Request) {
       { status: 201 },
     );
   } catch (error) {
+    if (error instanceof InactiveSystemError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
     if (error instanceof ZodError) {
       return NextResponse.json(
         { error: "Invalid payload", details: error.issues },

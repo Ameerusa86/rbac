@@ -13,9 +13,13 @@ export default async function RolesPage() {
     },
   });
 
-  const systems = await db.system.findMany({ orderBy: { name: "asc" } });
+  const systems = await db.system.findMany({
+    where: { isActive: true },
+    orderBy: { name: "asc" },
+  });
 
   const permissions = await db.permission.findMany({
+    where: { system: { isActive: true } },
     orderBy: [{ system: { name: "asc" } }, { displayName: "asc" }],
     include: { system: true },
   });

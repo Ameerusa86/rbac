@@ -32,17 +32,37 @@ export async function PATCH(request: Request, context: RouteContext) {
   const name = String(body.name ?? "").trim();
   const description = body.description ? String(body.description).trim() : null;
   const isActive = Boolean(body.isActive);
-  const permissionIds = Array.isArray(body.permissionIds)
+  const rawPermissionIds: unknown[] = Array.isArray(body.permissionIds)
     ? body.permissionIds
-        .map(Number)
-        .filter((value: unknown) => !Number.isNaN(value))
     : [];
+  const permissionIds: number[] = rawPermissionIds
+    .map((value: unknown) => Number(value))
+    .filter((value: number) => !Number.isNaN(value));
+  const uniquePermissionIds = [...new Set(permissionIds)];
 
   if (!name) {
     return NextResponse.json(
       { error: "Role name is required" },
       { status: 400 },
     );
+  }
+
+  if (uniquePermissionIds.length > 0) {
+    const validPermissionCount = await db.permission.count({
+      where: {
+        id: { in: uniquePermissionIds },
+        system: { isActive: true },
+      },
+    });
+
+    if (validPermissionCount !== uniquePermissionIds.length) {
+      return NextResponse.json(
+        {
+          error: "One or more selected permissions belong to inactive systems.",
+        },
+        { status: 400 },
+      );
+    }
   }
 
   try {
@@ -60,13 +80,14 @@ export async function PATCH(request: Request, context: RouteContext) {
         where: { roleId },
       });
 
-      if (permissionIds.length > 0) {
-        const rolePermissionData: RolePermissionData[] = permissionIds.map(
-          (permissionId: number): RolePermissionData => ({
-            roleId,
-            permissionId,
-          }),
-        );
+      if (uniquePermissionIds.length > 0) {
+        const rolePermissionData: RolePermissionData[] =
+          uniquePermissionIds.map(
+            (permissionId: number): RolePermissionData => ({
+              roleId,
+              permissionId,
+            }),
+          );
         await tx.rolePermission.createMany({
           data: rolePermissionData,
         });
