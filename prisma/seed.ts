@@ -24,7 +24,7 @@ const prisma = new PrismaClient({
 
 const ROLE_SHEET_NAME = "RBAC";
 const ROLE_NAME_COLUMN = "Job Role Group";
-const DESCRIPTION_COLUMNS = ["Default Manager", "Existing Role in Paylocity?"];
+const DESCRIPTION_COLUMNS = ["Manager"];
 
 const IGNORED_COLUMNS = new Set([ROLE_NAME_COLUMN, ...DESCRIPTION_COLUMNS]);
 

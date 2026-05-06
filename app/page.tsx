@@ -8,6 +8,7 @@ import {
   Users,
 } from "lucide-react";
 import { db } from "@/lib/db";
+import { formatRoleDescription } from "@/lib/utils";
 
 export default async function HomePage() {
   const [roleCount, systemCount, permissionCount, accessLinkCount] =
@@ -118,26 +119,32 @@ export default async function HomePage() {
               </p>
             )}
 
-            {recentRoles.map((role) => (
-              <Link
-                key={role.id}
-                href={`/roles/${role.id}`}
-                className="flex items-center justify-between px-4 py-3 text-sm hover:bg-muted/40 transition-colors"
-              >
-                <div className="min-w-0">
-                  <p className="font-medium truncate">{role.name}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {role.description
-                      ? role.description.slice(0, 80) +
-                        (role.description.length > 80 ? "…" : "")
-                      : "No description"}
-                  </p>
-                </div>
-                <span className="ml-4 shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
-                  {role._count.rolePermissions} permissions
-                </span>
-              </Link>
-            ))}
+            {recentRoles.map((role) => {
+              const normalizedDescription = formatRoleDescription(
+                role.description,
+              );
+
+              return (
+                <Link
+                  key={role.id}
+                  href={`/roles/${role.id}`}
+                  className="flex items-center justify-between px-4 py-3 text-sm hover:bg-muted/40 transition-colors"
+                >
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{role.name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {normalizedDescription
+                        ? normalizedDescription.slice(0, 80) +
+                          (normalizedDescription.length > 80 ? "…" : "")
+                        : "No description"}
+                    </p>
+                  </div>
+                  <span className="ml-4 shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+                    {role._count.rolePermissions} permissions
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>

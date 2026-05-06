@@ -4,6 +4,7 @@ import Link from "next/link";
 import { type ComponentType, useMemo, useState } from "react";
 import { CheckCircle2, Layers3, ShieldCheck, XCircle } from "lucide-react";
 import { SearchInput } from "./search-input";
+import { formatRoleDescription } from "@/lib/utils";
 
 type MatrixRole = {
   id: number;
@@ -144,18 +145,18 @@ export function RoleMatrixTable({ roles, systems }: RoleMatrixTableProps) {
       )}
 
       {/* Matrix table */}
-      <div className="overflow-auto rounded-xl border bg-card">
+      <div className="max-h-[70vh] overflow-auto rounded-xl border bg-card">
         <table className="min-w-max text-sm">
           <thead>
             <tr className="border-b bg-muted/40">
-              <th className="sticky left-0 z-20 min-w-64 border-r bg-muted/40 px-4 py-3 text-left font-medium text-muted-foreground">
+              <th className="sticky top-0 z-20 min-w-56 border-r bg-muted/40 px-3 py-2.5 text-left font-medium text-muted-foreground">
                 Role
               </th>
 
               {visibleSystems.map((system) => (
                 <th
                   key={system}
-                  className="min-w-72 border-r px-4 py-3 text-left font-medium text-muted-foreground last:border-r-0"
+                  className="sticky top-0 z-20 min-w-64 border-r bg-muted/40 px-3 py-2.5 text-left font-medium text-muted-foreground last:border-r-0"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="truncate">{system}</span>
@@ -172,17 +173,18 @@ export function RoleMatrixTable({ roles, systems }: RoleMatrixTableProps) {
             {filteredRoles.map((role) => (
               <tr key={role.id} className="hover:bg-muted/20 transition-colors">
                 {/* Role name cell */}
-                <td className="sticky left-0 z-10 border-r bg-card px-4 py-3 align-top">
+                <td className="border-r bg-card px-3 py-2.5 align-top">
                   <Link
                     href={`/roles/${role.id}`}
                     className="font-medium text-foreground hover:text-primary transition-colors"
                   >
                     {role.name}
                   </Link>
-                  <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
-                    {role.description || "No description"}
+                  <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
+                    {formatRoleDescription(role.description) ||
+                      "No description"}
                   </p>
-                  <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                  <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
                     {role.isActive ? (
                       <>
                         <CheckCircle2 className="h-3 w-3 text-emerald-600" />
@@ -207,26 +209,28 @@ export function RoleMatrixTable({ roles, systems }: RoleMatrixTableProps) {
                   return (
                     <td
                       key={`${role.id}-${system}`}
-                      className="max-w-80 border-r px-4 py-3 align-top last:border-r-0"
+                      className="max-w-72 border-r px-3 py-2.5 align-top last:border-r-0"
                     >
                       {permissions.length > 0 ? (
-                        <div className="space-y-1.5">
-                          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                             {permissions.length} permissions
                           </p>
-                          {previewPermissions.map((p) => (
-                            <div
-                              key={p}
-                              className="rounded-lg border bg-muted/40 px-2 py-1 text-xs text-foreground"
-                              title={p}
-                            >
-                              <span className="line-clamp-2 break-words">
-                                {p}
-                              </span>
-                            </div>
-                          ))}
+                          <div className="flex flex-wrap gap-1">
+                            {previewPermissions.map((p) => (
+                              <div
+                                key={p}
+                                className="max-w-full rounded-md border bg-muted/40 px-2 py-0.5 text-xs text-foreground"
+                                title={p}
+                              >
+                                <span className="line-clamp-1 break-words">
+                                  {p}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
                           {remainingCount > 0 && (
-                            <div className="rounded-lg border border-dashed bg-background px-2 py-1 text-xs text-muted-foreground">
+                            <div className="inline-flex rounded-md border border-dashed bg-background px-2 py-0.5 text-xs text-muted-foreground">
                               +{remainingCount} more
                             </div>
                           )}

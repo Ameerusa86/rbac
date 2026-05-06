@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { formatPermissionLabel } from "@/lib/utils";
+import { formatPermissionLabel, formatRoleDescription } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -84,7 +84,8 @@ export default async function RoleDetailsPage({ params }: PageProps) {
               {role.name}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              {role.description ?? "No description available."}
+              {formatRoleDescription(role.description) ||
+                "No description available."}
             </p>
             <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1 rounded-full border bg-background px-2.5 py-1">

@@ -27,3 +27,11 @@ export function formatPermissionLabel(
 
   return normalized;
 }
+
+export function formatRoleDescription(description: string | null | undefined) {
+  if (!description) {
+    return description ?? "";
+  }
+
+  return description.replace(/^\s*default\s*manager\s*:/i, "Manager:");
+}

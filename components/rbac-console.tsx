@@ -111,7 +111,7 @@ function extractManagerName(description: string | null) {
     return UNASSIGNED_MANAGER;
   }
 
-  const match = description.match(/default manager\s*:\s*([^|]+)/i);
+  const match = description.match(/manager\s*:\s*([^|]+)/i);
   if (!match?.[1]) {
     return UNASSIGNED_MANAGER;
   }

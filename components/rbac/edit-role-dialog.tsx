@@ -75,8 +75,8 @@ export function EditRoleDialog({ role, permissions }: EditRoleDialogProps) {
     setName(role.name);
     const rawDesc = role.description ?? "";
     setDescription(
-      rawDesc.startsWith("Default Manager: ")
-        ? rawDesc.slice("Default Manager: ".length)
+      rawDesc.startsWith("Manager: ")
+        ? rawDesc.slice("Manager: ".length)
         : rawDesc,
     );
     setIsActive(role.isActive);

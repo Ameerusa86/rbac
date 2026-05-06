@@ -6,6 +6,7 @@ import { CheckCircle2, XCircle } from "lucide-react";
 import { SearchInput } from "./search-input";
 import { EditRoleDialog } from "./edit-role-dialog";
 import { DeleteRoleDialog } from "./delete-role-dialog";
+import { formatRoleDescription } from "@/lib/utils";
 
 type Role = {
   id: number;
@@ -129,7 +130,7 @@ export function RolesTable({ roles, systems, permissions }: RolesTableProps) {
                   </Link>
                   {role.description && (
                     <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
-                      {role.description.slice(0, 80)}
+                      {formatRoleDescription(role.description).slice(0, 80)}
                     </p>
                   )}
                 </td>
