@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { SearchInput } from "./search-input";
 import { EditRoleDialog } from "./edit-role-dialog";
+import { DeleteRoleDialog } from "./delete-role-dialog";
 
 type Role = {
   id: number;
@@ -150,9 +151,7 @@ export function RolesTable({ roles, systems, permissions }: RolesTableProps) {
                       </span>
                     )}
                     {role.systems.length === 0 && (
-                      <span className="text-xs text-muted-foreground/50">
-                        â€”
-                      </span>
+                      <span className="text-xs text-muted-foreground/50"></span>
                     )}
                   </div>
                 </td>
@@ -180,17 +179,20 @@ export function RolesTable({ roles, systems, permissions }: RolesTableProps) {
                 </td>
 
                 {/* Actions */}
-                <td className="px-4 py-3 text-right">
-                  <EditRoleDialog
-                    role={{
-                      id: role.id,
-                      name: role.name,
-                      description: role.description,
-                      isActive: role.isActive,
-                      permissionIds: role.permissionIds,
-                    }}
-                    permissions={permissions}
-                  />
+                <td className="px-4 py-3">
+                  <div className="flex items-center justify-end gap-1">
+                    <EditRoleDialog
+                      role={{
+                        id: role.id,
+                        name: role.name,
+                        description: role.description,
+                        isActive: role.isActive,
+                        permissionIds: role.permissionIds,
+                      }}
+                      permissions={permissions}
+                    />
+                    <DeleteRoleDialog role={{ id: role.id, name: role.name }} />
+                  </div>
                 </td>
               </tr>
             ))}

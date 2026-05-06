@@ -153,9 +153,7 @@ export function RoleMatrixTable({ roles, systems }: RoleMatrixTableProps) {
                           ))}
                         </div>
                       ) : (
-                        <span className="text-xs text-muted-foreground/40">
-                          â€”
-                        </span>
+                        <span className="text-xs text-muted-foreground/40"></span>
                       )}
                     </td>
                   );
