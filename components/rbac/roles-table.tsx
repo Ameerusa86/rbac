@@ -1,7 +1,8 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { CheckCircle2, XCircle } from "lucide-react";
 import { SearchInput } from "./search-input";
 import { EditRoleDialog } from "./edit-role-dialog";
 
@@ -46,94 +47,139 @@ export function RolesTable({ roles, systems, permissions }: RolesTableProps) {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-4">
+      {/* Page header */}
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Roles</h1>
-
-          <p className="text-sm text-muted-foreground">
-            Search, filter, and edit RBAC job roles by system.
+          <h1 className="text-2xl font-semibold tracking-tight">Roles</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Manage job roles and their assigned access permissions.
           </p>
         </div>
+        <span className="shrink-0 rounded-full border bg-muted px-3 py-1 text-xs text-muted-foreground">
+          {roles.length} total
+        </span>
+      </div>
 
-        <div className="flex flex-col gap-3 md:flex-row md:items-center">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Search roles..."
-          />
+      {/* Filters */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search roles or descriptionsâ€¦"
+        />
 
-          <select
-            value={selectedSystem}
-            onChange={(event) => setSelectedSystem(event.target.value)}
-            className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring md:w-72"
-          >
-            <option value="all">All systems</option>
+        <select
+          value={selectedSystem}
+          onChange={(e) => setSelectedSystem(e.target.value)}
+          className="h-10 rounded-lg border bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring md:w-64"
+        >
+          <option value="all">All systems</option>
+          {systems.map((system) => (
+            <option key={system} value={system}>
+              {system}
+            </option>
+          ))}
+        </select>
+      </div>
 
-            {systems.map((system) => (
-              <option key={system} value={system}>
-                {system}
-              </option>
-            ))}
-          </select>
-        </div>
-
+      {/* Result count */}
+      {(search || selectedSystem !== "all") && (
         <p className="text-sm text-muted-foreground">
           Showing {filteredRoles.length} of {roles.length} roles
         </p>
-      </div>
+      )}
 
-      <div className="overflow-hidden rounded-lg border">
+      {/* Table */}
+      <div className="overflow-hidden rounded-xl border bg-card">
         <table className="w-full text-sm">
-          <thead className="border-b bg-muted/50">
-            <tr>
-              <th className="px-4 py-3 text-left">Role</th>
-              <th className="px-4 py-3 text-left">Description</th>
-              <th className="px-4 py-3 text-left">Systems</th>
-              <th className="px-4 py-3 text-left">Permissions</th>
-              <th className="px-4 py-3 text-left">Active</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+          <thead>
+            <tr className="border-b bg-muted/40">
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                Role
+              </th>
+              <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground md:table-cell">
+                Systems
+              </th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                Permissions
+              </th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                Status
+              </th>
+              <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                Actions
+              </th>
             </tr>
           </thead>
 
-          <tbody>
+          <tbody className="divide-y">
             {filteredRoles.map((role) => (
-              <tr key={role.id} className="border-b last:border-b-0">
+              <tr
+                key={role.id}
+                className="group hover:bg-muted/30 transition-colors"
+              >
+                {/* Name + description */}
                 <td className="px-4 py-3">
                   <Link
                     href={`/roles/${role.id}`}
-                    className="font-medium text-blue-600 hover:underline"
+                    className="font-medium text-foreground hover:text-primary transition-colors"
                   >
                     {role.name}
                   </Link>
+                  {role.description && (
+                    <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
+                      {role.description.slice(0, 80)}
+                    </p>
+                  )}
                 </td>
 
-                <td className="px-4 py-3 text-muted-foreground">
-                  {role.description || "—"}
-                </td>
-
-                <td className="px-4 py-3">
+                {/* Systems */}
+                <td className="hidden px-4 py-3 md:table-cell">
                   <div className="flex flex-wrap gap-1">
                     {role.systems.slice(0, 3).map((system) => (
                       <span
                         key={system}
-                        className="rounded-full border px-2 py-0.5 text-xs"
+                        className="rounded-full border bg-muted/50 px-2 py-0.5 text-xs text-muted-foreground"
                       >
                         {system}
                       </span>
                     ))}
-
                     {role.systems.length > 3 && (
-                      <span className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground">
+                      <span className="rounded-full border bg-muted/50 px-2 py-0.5 text-xs text-muted-foreground">
                         +{role.systems.length - 3}
+                      </span>
+                    )}
+                    {role.systems.length === 0 && (
+                      <span className="text-xs text-muted-foreground/50">
+                        â€”
                       </span>
                     )}
                   </div>
                 </td>
 
-                <td className="px-4 py-3">{role.permissionCount}</td>
+                {/* Permission count */}
+                <td className="px-4 py-3">
+                  <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium">
+                    {role.permissionCount}
+                  </span>
+                </td>
 
-                <td className="px-4 py-3">{role.isActive ? "Yes" : "No"}</td>
+                {/* Status */}
+                <td className="px-4 py-3">
+                  {role.isActive ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 border border-emerald-200">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Active
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground border">
+                      <XCircle className="h-3 w-3" />
+                      Inactive
+                    </span>
+                  )}
+                </td>
 
+                {/* Actions */}
                 <td className="px-4 py-3 text-right">
                   <EditRoleDialog
                     role={{
@@ -152,10 +198,10 @@ export function RolesTable({ roles, systems, permissions }: RolesTableProps) {
             {filteredRoles.length === 0 && (
               <tr>
                 <td
-                  colSpan={6}
-                  className="px-4 py-10 text-center text-muted-foreground"
+                  colSpan={5}
+                  className="px-4 py-12 text-center text-sm text-muted-foreground"
                 >
-                  No roles found.
+                  No roles match your filters.
                 </td>
               </tr>
             )}

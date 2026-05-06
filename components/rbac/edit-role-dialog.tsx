@@ -1,7 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { PencilLine, Search, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type Permission = {
   id: number;
@@ -39,26 +41,28 @@ export function EditRoleDialog({ role, permissions }: EditRoleDialogProps) {
 
     return permissions
       .filter(
-        (permission) =>
-          permission.displayName.toLowerCase().includes(search) ||
-          permission.systemName.toLowerCase().includes(search),
+        (p) =>
+          p.displayName.toLowerCase().includes(search) ||
+          p.systemName.toLowerCase().includes(search),
       )
-      .reduce<Record<string, Permission[]>>((groups, permission) => {
-        if (!groups[permission.systemName]) {
-          groups[permission.systemName] = [];
-        }
-
-        groups[permission.systemName].push(permission);
+      .reduce<Record<string, Permission[]>>((groups, p) => {
+        if (!groups[p.systemName]) groups[p.systemName] = [];
+        groups[p.systemName].push(p);
         return groups;
       }, {});
   }, [permissions, permissionSearch]);
 
-  function togglePermission(permissionId: number) {
-    setSelectedPermissionIds((current) =>
-      current.includes(permissionId)
-        ? current.filter((id) => id !== permissionId)
-        : [...current, permissionId],
+  function togglePermission(id: number) {
+    setSelectedPermissionIds((cur) =>
+      cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id],
     );
+  }
+
+  function handleClose() {
+    if (!isSaving) {
+      setOpen(false);
+      setError("");
+    }
   }
 
   async function handleSave() {
@@ -73,9 +77,7 @@ export function EditRoleDialog({ role, permissions }: EditRoleDialogProps) {
 
     const response = await fetch(`/api/roles/${role.id}`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name,
         description,
@@ -96,132 +98,160 @@ export function EditRoleDialog({ role, permissions }: EditRoleDialogProps) {
     router.refresh();
   }
 
+  const inputClass =
+    "w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground";
+
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted"
-      >
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        <PencilLine className="h-3.5 w-3.5" />
         Edit
-      </button>
+      </Button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg border bg-background p-6 shadow-lg">
-            <div>
-              <h2 className="text-lg font-semibold">Edit Role</h2>
-              <p className="text-sm text-muted-foreground">
-                Update role details and assigned access.
-              </p>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          onClick={(e) => e.target === e.currentTarget && handleClose()}
+        >
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border bg-card shadow-2xl">
+            {/* Dialog header */}
+            <div className="flex items-start justify-between border-b px-6 py-5">
+              <div>
+                <h2 className="text-base font-semibold">Edit Role</h2>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Update details and assigned permissions.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleClose}
+                disabled={isSaving}
+                className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Role Name</label>
-                <input
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                />
+            {/* Form body */}
+            <div className="p-6 space-y-5">
+              {/* Name + Active toggle */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Role Name</label>
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. HR Manager"
+                    className={inputClass}
+                  />
+                </div>
+
+                <div className="flex items-end pb-0.5">
+                  <label className="flex items-center gap-2.5 cursor-pointer select-none text-sm">
+                    <input
+                      type="checkbox"
+                      checked={isActive}
+                      onChange={(e) => setIsActive(e.target.checked)}
+                      className="h-4 w-4 rounded accent-primary"
+                    />
+                    <span>Active role</span>
+                  </label>
+                </div>
               </div>
 
-              <label className="flex items-end gap-2 pb-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={isActive}
-                  onChange={(event) => setIsActive(event.target.checked)}
-                />
-                Active role
-              </label>
-
-              <div className="space-y-2 md:col-span-2">
+              {/* Description */}
+              <div className="space-y-1.5">
                 <label className="text-sm font-medium">Description</label>
                 <textarea
                   value={description}
-                  onChange={(event) => setDescription(event.target.value)}
+                  onChange={(e) => setDescription(e.target.value)}
                   rows={3}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="Optional descriptionâ€¦"
+                  className={inputClass}
                 />
               </div>
-            </div>
 
-            <div className="mt-6 space-y-3">
-              <div>
-                <h3 className="font-medium">Assigned Access</h3>
-                <p className="text-sm text-muted-foreground">
-                  Selected: {selectedPermissionIds.length}
-                </p>
-              </div>
+              {/* Permissions section */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-medium">Permissions</h3>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedPermissionIds.length} selected
+                    </p>
+                  </div>
+                </div>
 
-              <input
-                value={permissionSearch}
-                onChange={(event) => setPermissionSearch(event.target.value)}
-                placeholder="Search systems or permissions..."
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-              />
+                {/* Permission search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <input
+                    value={permissionSearch}
+                    onChange={(e) => setPermissionSearch(e.target.value)}
+                    placeholder="Search systems or permissionsâ€¦"
+                    className={`${inputClass} pl-9`}
+                  />
+                </div>
 
-              <div className="max-h-80 space-y-4 overflow-y-auto rounded-md border p-4">
-                {Object.entries(groupedPermissions).map(
-                  ([systemName, systemPermissions]) => (
-                    <div key={systemName} className="space-y-2">
-                      <h4 className="text-sm font-semibold">{systemName}</h4>
-
-                      <div className="grid gap-2 md:grid-cols-2">
-                        {systemPermissions.map((permission) => (
-                          <label
-                            key={permission.id}
-                            className="flex items-start gap-2 rounded-md border p-2 text-sm hover:bg-muted/50"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedPermissionIds.includes(
-                                permission.id,
-                              )}
-                              onChange={() => togglePermission(permission.id)}
-                              className="mt-1"
-                            />
-
-                            <span>{permission.displayName}</span>
-                          </label>
-                        ))}
+                {/* Permission list */}
+                <div className="max-h-72 space-y-4 overflow-y-auto rounded-lg border p-3">
+                  {Object.entries(groupedPermissions).map(
+                    ([systemName, systemPermissions]) => (
+                      <div key={systemName}>
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          {systemName}
+                        </p>
+                        <div className="grid gap-1.5 sm:grid-cols-2">
+                          {systemPermissions.map((p) => (
+                            <label
+                              key={p.id}
+                              className="flex items-start gap-2 rounded-lg border bg-background p-2 text-sm hover:bg-muted/40 cursor-pointer transition-colors"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedPermissionIds.includes(p.id)}
+                                onChange={() => togglePermission(p.id)}
+                                className="mt-0.5 h-3.5 w-3.5 rounded accent-primary"
+                              />
+                              <span className="leading-snug">
+                                {p.displayName}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ),
-                )}
+                    ),
+                  )}
 
-                {Object.keys(groupedPermissions).length === 0 && (
-                  <p className="py-8 text-center text-sm text-muted-foreground">
-                    No permissions found.
-                  </p>
-                )}
+                  {Object.keys(groupedPermissions).length === 0 && (
+                    <p className="py-8 text-center text-sm text-muted-foreground">
+                      No permissions match your search.
+                    </p>
+                  )}
+                </div>
               </div>
+
+              {/* Error */}
+              {error && (
+                <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {error}
+                </p>
+              )}
             </div>
 
-            {error && (
-              <p className="mt-4 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {error}
-              </p>
-            )}
-
-            <div className="mt-6 flex justify-end gap-2">
-              <button
+            {/* Footer */}
+            <div className="flex justify-end gap-2 border-t px-6 py-4">
+              <Button
                 type="button"
-                onClick={() => setOpen(false)}
-                className="rounded-md border px-3 py-2 text-sm hover:bg-muted"
+                variant="outline"
+                onClick={handleClose}
                 disabled={isSaving}
               >
                 Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={handleSave}
-                className="rounded-md bg-black px-3 py-2 text-sm text-white disabled:opacity-50"
-                disabled={isSaving}
-              >
-                {isSaving ? "Saving..." : "Save Changes"}
-              </button>
+              </Button>
+              <Button type="button" onClick={handleSave} disabled={isSaving}>
+                {isSaving ? "Savingâ€¦" : "Save Changes"}
+              </Button>
             </div>
           </div>
         </div>

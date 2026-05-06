@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Space_Grotesk, Figtree } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { cn } from "@/lib/utils";
 
 const figtreeHeading = Figtree({
@@ -51,8 +52,9 @@ export default function RootLayout({
         figtreeHeading.variable,
       )}
     >
-      <body className="flex min-h-dvh w-full flex-col text-[15px]">
-        {children}
+      <body className="flex h-dvh w-full overflow-hidden text-[15px]">
+        <SidebarNav />
+        <div className="flex flex-1 flex-col overflow-y-auto">{children}</div>
         <Toaster />
       </body>
     </html>

@@ -49,11 +49,11 @@ export default async function RoleMatrixPage() {
   });
 
   return (
-    <main className="p-6">
+    <div className="p-6">
       <RoleMatrixTable
         roles={formattedRoles}
         systems={systems.map((system) => system.name)}
       />
-    </main>
+    </div>
   );
 }

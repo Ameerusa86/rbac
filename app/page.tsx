@@ -1,4 +1,12 @@
 import Link from "next/link";
+import {
+  ArrowRight,
+  Grid2x2,
+  KeyRound,
+  Link2,
+  Server,
+  Users,
+} from "lucide-react";
 import { db } from "@/lib/db";
 
 export default async function HomePage() {
@@ -12,121 +20,186 @@ export default async function HomePage() {
 
   const recentRoles = await db.role.findMany({
     take: 5,
-    orderBy: {
-      updatedAt: "desc",
-    },
+    orderBy: { updatedAt: "desc" },
     include: {
-      _count: {
-        select: {
-          rolePermissions: true,
-        },
-      },
+      _count: { select: { rolePermissions: true } },
     },
   });
 
   return (
-    <main className="p-6 space-y-8">
-      <section className="space-y-2">
-        <h1 className="text-3xl font-semibold">RBAC Manager</h1>
-        <p className="max-w-3xl text-sm text-muted-foreground">
-          Central place to manage job roles, systems, and access permissions
-          imported from your RBAC spreadsheet.
+    <div className="p-6 space-y-8">
+      {/* Header */}
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <p className="text-sm text-muted-foreground">
+          Overview of your role-based access configuration.
         </p>
-      </section>
+      </div>
 
-      <section className="grid gap-4 md:grid-cols-4">
-        <DashboardCard title="Roles" value={roleCount} href="/roles" />
-        <DashboardCard title="Systems" value={systemCount} href="/systems" />
-        <DashboardCard
+      {/* Stat cards */}
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          title="Roles"
+          value={roleCount}
+          href="/roles"
+          icon={<Users className="h-4 w-4" />}
+          description="Defined job roles"
+        />
+        <StatCard
+          title="Systems"
+          value={systemCount}
+          href="/systems"
+          icon={<Server className="h-4 w-4" />}
+          description="Source systems"
+        />
+        <StatCard
           title="Permissions"
           value={permissionCount}
           href="/permissions"
+          icon={<KeyRound className="h-4 w-4" />}
+          description="Access permissions"
         />
-        <DashboardCard
+        <StatCard
           title="Access Links"
           value={accessLinkCount}
           href="/roles"
+          icon={<Link2 className="h-4 w-4" />}
+          description="Role–permission mappings"
         />
       </section>
 
-      <section className="grid gap-4 md:grid-cols-3">
-        <ActionCard
-          title="Manage Roles"
-          description="Search roles, filter by system, and add or remove access."
-          href="/roles"
-        />
-        <ActionCard
-          title="Review Systems"
-          description="See all systems created from your spreadsheet columns."
-          href="/systems"
-        />
-        <ActionCard
-          title="Review Permissions"
-          description="View all permissions grouped by system."
-          href="/permissions"
-        />
-      </section>
+      {/* Quick links */}
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">
+          Quick Access
+        </h2>
 
-      <section className="rounded-lg border">
-        <div className="border-b px-4 py-3">
-          <h2 className="font-medium">Recently Updated Roles</h2>
-        </div>
-
-        <div className="divide-y">
-          {recentRoles.map((role) => (
-            <Link
-              key={role.id}
-              href={`/roles/${role.id}`}
-              className="flex items-center justify-between px-4 py-3 text-sm hover:bg-muted/50"
-            >
-              <div>
-                <p className="font-medium">{role.name}</p>
-                <p className="text-muted-foreground">
-                  {role.description || "No description"}
-                </p>
-              </div>
-
-              <span className="text-muted-foreground">
-                {role._count.rolePermissions} permissions
-              </span>
-            </Link>
-          ))}
+        <div className="grid gap-3 sm:grid-cols-3">
+          <QuickLink
+            title="Manage Roles"
+            description="Search, filter, and edit RBAC job roles and their assigned access."
+            href="/roles"
+            icon={<Users className="h-5 w-5 text-primary" />}
+          />
+          <QuickLink
+            title="Role Matrix"
+            description="Spreadsheet view of roles mapped to systems and permissions."
+            href="/role-matrix"
+            icon={<Grid2x2 className="h-5 w-5 text-primary" />}
+          />
+          <QuickLink
+            title="Review Systems"
+            description="View all source systems and their permission counts."
+            href="/systems"
+            icon={<Server className="h-5 w-5 text-primary" />}
+          />
         </div>
       </section>
-    </main>
+
+      {/* Recent roles */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">
+            Recently Updated
+          </h2>
+          <Link
+            href="/roles"
+            className="flex items-center gap-1 text-xs text-primary hover:underline"
+          >
+            View all <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+
+        <div className="rounded-xl border bg-card overflow-hidden">
+          <div className="divide-y">
+            {recentRoles.length === 0 && (
+              <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+                No roles yet.
+              </p>
+            )}
+
+            {recentRoles.map((role) => (
+              <Link
+                key={role.id}
+                href={`/roles/${role.id}`}
+                className="flex items-center justify-between px-4 py-3 text-sm hover:bg-muted/40 transition-colors"
+              >
+                <div className="min-w-0">
+                  <p className="font-medium truncate">{role.name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {role.description
+                      ? role.description.slice(0, 80) +
+                        (role.description.length > 80 ? "…" : "")
+                      : "No description"}
+                  </p>
+                </div>
+                <span className="ml-4 shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+                  {role._count.rolePermissions} permissions
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
 
-function DashboardCard({
+function StatCard({
   title,
   value,
   href,
+  icon,
+  description,
 }: {
   title: string;
   value: number;
   href: string;
+  icon: React.ReactNode;
+  description: string;
 }) {
   return (
-    <Link href={href} className="rounded-lg border p-5 hover:bg-muted/50">
-      <p className="text-sm text-muted-foreground">{title}</p>
-      <p className="mt-2 text-3xl font-semibold">{value}</p>
+    <Link
+      href={href}
+      className="group rounded-xl border bg-card p-5 hover:border-primary/30 hover:bg-primary/[0.03] transition-colors"
+    >
+      <div className="flex items-start justify-between">
+        <div className="rounded-lg border bg-background p-2 text-muted-foreground group-hover:border-primary/20 group-hover:text-primary transition-colors">
+          {icon}
+        </div>
+        <ArrowRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-primary/50 transition-colors" />
+      </div>
+      <p className="mt-4 text-3xl font-semibold tracking-tight">
+        {value.toLocaleString()}
+      </p>
+      <p className="mt-1 text-sm font-medium">{title}</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
     </Link>
   );
 }
 
-function ActionCard({
+function QuickLink({
   title,
   description,
   href,
+  icon,
 }: {
   title: string;
   description: string;
   href: string;
+  icon: React.ReactNode;
 }) {
   return (
-    <Link href={href} className="rounded-lg border p-5 hover:bg-muted/50">
-      <h3 className="font-medium">{title}</h3>
-      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+    <Link
+      href={href}
+      className="group flex flex-col rounded-xl border bg-card p-5 hover:border-primary/30 hover:bg-primary/[0.03] transition-colors"
+    >
+      <div className="mb-3">{icon}</div>
+      <p className="font-medium">{title}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+      <div className="mt-3 flex items-center gap-1 text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+        Open <ArrowRight className="h-3 w-3" />
+      </div>
     </Link>
   );
 }

@@ -1,5 +1,5 @@
-import { RbacConsole } from "@/components/rbac-console";
+import { redirect } from "next/navigation";
 
 export default function AdminPage() {
-  return <RbacConsole mode="admin" />;
+  redirect("/roles");
 }
