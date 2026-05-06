@@ -1,8 +1,8 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { type ComponentType, useMemo, useState } from "react";
+import { CheckCircle2, Layers3, ShieldCheck, XCircle } from "lucide-react";
 import { SearchInput } from "./search-input";
 
 type MatrixRole = {
@@ -21,6 +21,25 @@ type RoleMatrixTableProps = {
 export function RoleMatrixTable({ roles, systems }: RoleMatrixTableProps) {
   const [search, setSearch] = useState("");
   const [selectedSystem, setSelectedSystem] = useState("all");
+
+  const totalPermissionMappings = useMemo(
+    () =>
+      roles.reduce(
+        (acc, role) =>
+          acc +
+          Object.values(role.systems).reduce(
+            (innerAcc, permissions) => innerAcc + permissions.length,
+            0,
+          ),
+        0,
+      ),
+    [roles],
+  );
+
+  const activeRoleCount = useMemo(
+    () => roles.filter((role) => role.isActive).length,
+    [roles],
+  );
 
   const filteredRoles = useMemo(() => {
     const value = search.toLowerCase();
@@ -43,6 +62,20 @@ export function RoleMatrixTable({ roles, systems }: RoleMatrixTableProps) {
     return systems.filter((s) => s === selectedSystem);
   }, [systems, selectedSystem]);
 
+  const systemCoverage = useMemo(() => {
+    const counts = new Map<string, number>();
+
+    for (const role of roles) {
+      for (const [systemName, permissions] of Object.entries(role.systems)) {
+        if (permissions.length > 0) {
+          counts.set(systemName, (counts.get(systemName) ?? 0) + 1);
+        }
+      }
+    }
+
+    return counts;
+  }, [roles]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -56,6 +89,30 @@ export function RoleMatrixTable({ roles, systems }: RoleMatrixTableProps) {
         <span className="shrink-0 rounded-full border bg-muted px-3 py-1 text-xs text-muted-foreground">
           {roles.length} roles
         </span>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <SummaryCard label="Roles" value={roles.length} icon={ShieldCheck} />
+        <SummaryCard
+          label="Active Roles"
+          value={activeRoleCount}
+          helper={`${roles.length - activeRoleCount} inactive`}
+          icon={CheckCircle2}
+        />
+        <SummaryCard
+          label="Visible Systems"
+          value={visibleSystems.length}
+          helper={
+            selectedSystem === "all" ? "All systems shown" : "Filtered view"
+          }
+          icon={Layers3}
+        />
+        <SummaryCard
+          label="Permission Mappings"
+          value={totalPermissionMappings}
+          helper="Role-system assignments"
+          icon={Layers3}
+        />
       </div>
 
       {/* Filters */}
@@ -100,7 +157,12 @@ export function RoleMatrixTable({ roles, systems }: RoleMatrixTableProps) {
                   key={system}
                   className="min-w-72 border-r px-4 py-3 text-left font-medium text-muted-foreground last:border-r-0"
                 >
-                  {system}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate">{system}</span>
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                      {systemCoverage.get(system) ?? 0}
+                    </span>
+                  </div>
                 </th>
               ))}
             </tr>
@@ -117,6 +179,9 @@ export function RoleMatrixTable({ roles, systems }: RoleMatrixTableProps) {
                   >
                     {role.name}
                   </Link>
+                  <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
+                    {role.description || "No description"}
+                  </p>
                   <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                     {role.isActive ? (
                       <>
@@ -135,6 +200,9 @@ export function RoleMatrixTable({ roles, systems }: RoleMatrixTableProps) {
                 {/* System permission cells */}
                 {visibleSystems.map((system) => {
                   const permissions = role.systems[system] ?? [];
+                  const previewPermissions = permissions.slice(0, 4);
+                  const remainingCount =
+                    permissions.length - previewPermissions.length;
 
                   return (
                     <td
@@ -142,18 +210,31 @@ export function RoleMatrixTable({ roles, systems }: RoleMatrixTableProps) {
                       className="max-w-80 border-r px-4 py-3 align-top last:border-r-0"
                     >
                       {permissions.length > 0 ? (
-                        <div className="space-y-1">
-                          {permissions.map((p) => (
+                        <div className="space-y-1.5">
+                          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                            {permissions.length} permissions
+                          </p>
+                          {previewPermissions.map((p) => (
                             <div
                               key={p}
                               className="rounded-lg border bg-muted/40 px-2 py-1 text-xs text-foreground"
+                              title={p}
                             >
-                              {p}
+                              <span className="line-clamp-2 break-words">
+                                {p}
+                              </span>
                             </div>
                           ))}
+                          {remainingCount > 0 && (
+                            <div className="rounded-lg border border-dashed bg-background px-2 py-1 text-xs text-muted-foreground">
+                              +{remainingCount} more
+                            </div>
+                          )}
                         </div>
                       ) : (
-                        <span className="text-xs text-muted-foreground/40"></span>
+                        <span className="text-xs text-muted-foreground/40">
+                          -
+                        </span>
                       )}
                     </td>
                   );
@@ -174,6 +255,28 @@ export function RoleMatrixTable({ roles, systems }: RoleMatrixTableProps) {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+type SummaryCardProps = {
+  label: string;
+  value: number;
+  helper?: string;
+  icon: ComponentType<{ className?: string }>;
+};
+
+function SummaryCard({ label, value, helper, icon: Icon }: SummaryCardProps) {
+  return (
+    <div className="rounded-xl border bg-card p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          {label}
+        </p>
+        <Icon className="h-4 w-4 text-muted-foreground/70" />
+      </div>
+      <p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p>
+      {helper && <p className="mt-1 text-xs text-muted-foreground">{helper}</p>}
     </div>
   );
 }

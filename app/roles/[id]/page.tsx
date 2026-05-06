@@ -2,7 +2,14 @@ import { db } from "@/lib/db";
 import { formatPermissionLabel } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CheckCircle2, KeyRound, XCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  CheckCircle2,
+  KeyRound,
+  Layers3,
+  XCircle,
+} from "lucide-react";
 
 type PageProps = {
   params: Promise<{
@@ -45,6 +52,19 @@ export default async function RoleDetailsPage({ params }: PageProps) {
 
   const totalPermissions = role.rolePermissions.length;
   const systemCount = Object.keys(groupedPermissions).length;
+  const sortedSystemGroups = Object.entries(groupedPermissions).sort(
+    ([aSystem, aPermissions], [bSystem, bPermissions]) => {
+      if (bPermissions.length !== aPermissions.length) {
+        return bPermissions.length - aPermissions.length;
+      }
+
+      return aSystem.localeCompare(bSystem);
+    },
+  );
+
+  const topSystem = sortedSystemGroups[0];
+  const createdDate = role.createdAt.toLocaleDateString();
+  const updatedDate = role.updatedAt.toLocaleDateString();
 
   return (
     <div className="p-6 space-y-6">
@@ -60,12 +80,22 @@ export default async function RoleDetailsPage({ params }: PageProps) {
 
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="text-3xl font-semibold tracking-tight">
               {role.name}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {role.description ?? "No description available."}
             </p>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1 rounded-full border bg-background px-2.5 py-1">
+                <CalendarDays className="h-3 w-3" />
+                Created {createdDate}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full border bg-background px-2.5 py-1">
+                <CalendarDays className="h-3 w-3" />
+                Updated {updatedDate}
+              </span>
+            </div>
           </div>
 
           {role.isActive ? (
@@ -83,14 +113,40 @@ export default async function RoleDetailsPage({ params }: PageProps) {
       </div>
 
       {/* Meta row */}
-      <div className="flex gap-4 text-sm">
-        <div className="rounded-lg border bg-card px-4 py-3">
-          <p className="text-xs text-muted-foreground">Permissions</p>
-          <p className="mt-1 text-xl font-semibold">{totalPermissions}</p>
+      <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-xl border bg-card p-4">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Permissions
+          </p>
+          <p className="mt-2 text-2xl font-semibold">{totalPermissions}</p>
         </div>
-        <div className="rounded-lg border bg-card px-4 py-3">
-          <p className="text-xs text-muted-foreground">Systems</p>
-          <p className="mt-1 text-xl font-semibold">{systemCount}</p>
+
+        <div className="rounded-xl border bg-card p-4">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Systems
+          </p>
+          <p className="mt-2 text-2xl font-semibold">{systemCount}</p>
+        </div>
+
+        <div className="rounded-xl border bg-card p-4">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Largest System
+          </p>
+          <p className="mt-2 truncate text-base font-semibold">
+            {topSystem?.[0] ?? "-"}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {topSystem ? `${topSystem[1].length} permissions` : "No data"}
+          </p>
+        </div>
+
+        <div className="rounded-xl border bg-card p-4">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Status
+          </p>
+          <p className="mt-2 text-base font-semibold">
+            {role.isActive ? "Active" : "Inactive"}
+          </p>
         </div>
       </div>
 
@@ -103,23 +159,44 @@ export default async function RoleDetailsPage({ params }: PageProps) {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {Object.entries(groupedPermissions).map(([systemName, perms]) => (
-            <div key={systemName} className="rounded-xl border bg-card p-4">
-              <h2 className="mb-3 text-sm font-semibold">{systemName}</h2>
-              <ul className="space-y-1.5">
-                {perms.map((p) => (
-                  <li
-                    key={p}
-                    className="flex items-start gap-2 text-sm text-muted-foreground"
-                  >
-                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/60" />
-                    {p}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Access by System
+            </h2>
+            <span className="inline-flex items-center gap-1 rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground">
+              <Layers3 className="h-3 w-3" />
+              Sorted by permission count
+            </span>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-2">
+            {sortedSystemGroups.map(([systemName, perms]) => (
+              <div key={systemName} className="rounded-xl border bg-card p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h3 className="truncate text-sm font-semibold">
+                    {systemName}
+                  </h3>
+                  <span className="shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium">
+                    {perms.length}
+                  </span>
+                </div>
+
+                <ul className="grid gap-1.5 sm:grid-cols-2">
+                  {perms.map((p) => (
+                    <li
+                      key={p}
+                      className="rounded-lg border bg-muted/20 px-2.5 py-1.5 text-sm text-muted-foreground"
+                    >
+                      <span className="line-clamp-2 break-words" title={p}>
+                        {p}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
