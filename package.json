@@ -7,10 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:generate": "dotenv -e .env.local -- prisma generate",
-    "db:migrate": "dotenv -e .env.local -- prisma migrate dev --name init_roles",
-    "db:push": "dotenv -e .env.local -- prisma db push --skip-generate",
-    "db:seed": "dotenv -e .env.local -- prisma db seed"
+    "db:generate": "dotenv -o -e .env.local -- prisma generate",
+    "db:migrate": "dotenv -o -e .env.local -- prisma migrate dev --name init_roles",
+    "db:push": "dotenv -o -e .env.local -- prisma db push --skip-generate",
+    "db:seed": "dotenv -o -e .env.local -- prisma db seed"
   },
   "dependencies": {
     "@prisma/client": "6.16.2",
