@@ -37,6 +37,8 @@ model Permission {
 
     system          System           @relation(fields: [systemId], references: [id], onDelete: Cascade)
     rolePermissions RolePermission[]
+
+    @@index([systemId])
 }
 
 model RolePermission {
@@ -48,4 +50,5 @@ model RolePermission {
     permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
     @@id([roleId, permissionId])
+    @@index([permissionId])
 }
