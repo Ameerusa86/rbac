@@ -146,17 +146,17 @@ export function RoleMatrixTable({ roles, systems }: RoleMatrixTableProps) {
 
       {/* Matrix table */}
       <div className="max-h-[70vh] overflow-auto rounded-xl border bg-card">
-        <table className="min-w-max text-sm">
+        <table className="min-w-max table-fixed text-sm">
           <thead>
-            <tr className="border-b bg-muted/40">
-              <th className="sticky top-0 z-20 min-w-56 border-r bg-muted/40 px-3 py-2.5 text-left font-medium text-muted-foreground">
+            <tr className="border-b bg-card shadow-[0_1px_0_0_var(--color-border)]">
+              <th className="sticky top-0 left-0 z-40 w-56 min-w-56 max-w-56 border-r bg-card px-3 py-2.5 text-left font-medium text-muted-foreground shadow-[2px_0_0_0_var(--color-border)] backdrop-blur supports-backdrop-filter:bg-card/95">
                 Role
               </th>
 
               {visibleSystems.map((system) => (
                 <th
                   key={system}
-                  className="sticky top-0 z-20 min-w-64 border-r bg-muted/40 px-3 py-2.5 text-left font-medium text-muted-foreground last:border-r-0"
+                  className="sticky top-0 z-30 min-w-64 border-r bg-card px-3 py-2.5 text-left font-medium text-muted-foreground backdrop-blur supports-backdrop-filter:bg-card/95 last:border-r-0"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="truncate">{system}</span>
@@ -171,16 +171,19 @@ export function RoleMatrixTable({ roles, systems }: RoleMatrixTableProps) {
 
           <tbody className="divide-y">
             {filteredRoles.map((role) => (
-              <tr key={role.id} className="hover:bg-muted/20 transition-colors">
+              <tr
+                key={role.id}
+                className="group transition-colors hover:bg-accent/30"
+              >
                 {/* Role name cell */}
-                <td className="border-r bg-card px-3 py-2.5 align-top">
+                <td className="sticky left-0 z-20 w-56 min-w-56 max-w-56 border-r bg-card px-3 py-2.5 align-top shadow-[2px_0_0_0_var(--color-border)] transition-colors group-hover:bg-accent/30">
                   <Link
                     href={`/roles/${role.id}`}
                     className="font-medium text-foreground hover:text-primary transition-colors"
                   >
                     {role.name}
                   </Link>
-                  <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
+                  <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2 wrap-break-word">
                     {formatRoleDescription(role.description) ||
                       "No description"}
                   </p>
@@ -209,7 +212,7 @@ export function RoleMatrixTable({ roles, systems }: RoleMatrixTableProps) {
                   return (
                     <td
                       key={`${role.id}-${system}`}
-                      className="max-w-72 border-r px-3 py-2.5 align-top last:border-r-0"
+                      className="max-w-72 border-r px-3 py-2.5 align-top transition-colors group-hover:bg-accent/30 last:border-r-0"
                     >
                       {permissions.length > 0 ? (
                         <div className="space-y-1">
@@ -223,7 +226,7 @@ export function RoleMatrixTable({ roles, systems }: RoleMatrixTableProps) {
                                 className="max-w-full rounded-md border bg-muted/40 px-2 py-0.5 text-xs text-foreground"
                                 title={p}
                               >
-                                <span className="line-clamp-1 break-words">
+                                <span className="line-clamp-1 wrap-break-word">
                                   {p}
                                 </span>
                               </div>
