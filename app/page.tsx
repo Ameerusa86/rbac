@@ -10,6 +10,8 @@ import {
 import { db } from "@/lib/db";
 import { formatRoleDescription } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const [roleCount, systemCount, permissionCount, accessLinkCount] =
     await Promise.all([
@@ -20,9 +22,14 @@ export default async function HomePage() {
     ]);
 
   const recentRoles = await db.role.findMany({
-    take: 5,
+    take: 8,
     orderBy: { updatedAt: "desc" },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      isActive: true,
+      updatedAt: true,
       _count: { select: { rolePermissions: true } },
     },
   });
@@ -111,41 +118,70 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        <div className="rounded-xl border bg-card overflow-hidden">
-          <div className="divide-y">
-            {recentRoles.length === 0 && (
-              <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-                No roles yet.
-              </p>
-            )}
+        <div className="overflow-auto rounded-xl border bg-card">
+          {recentRoles.length === 0 ? (
+            <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+              No roles yet.
+            </p>
+          ) : (
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground">
+                  <th className="px-4 py-2.5 text-left font-medium">Role</th>
+                  <th className="px-4 py-2.5 text-left font-medium">Status</th>
+                  <th className="px-4 py-2.5 text-left font-medium">
+                    Permissions
+                  </th>
+                  <th className="px-4 py-2.5 text-left font-medium">
+                    Last Updated
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {recentRoles.map((role) => {
+                  const normalizedDescription = formatRoleDescription(
+                    role.description,
+                  );
 
-            {recentRoles.map((role) => {
-              const normalizedDescription = formatRoleDescription(
-                role.description,
-              );
-
-              return (
-                <Link
-                  key={role.id}
-                  href={`/roles/${role.id}`}
-                  className="flex items-center justify-between px-4 py-3 text-sm hover:bg-muted/40 transition-colors"
-                >
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">{role.name}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {normalizedDescription
-                        ? normalizedDescription.slice(0, 80) +
-                          (normalizedDescription.length > 80 ? "…" : "")
-                        : "No description"}
-                    </p>
-                  </div>
-                  <span className="ml-4 shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
-                    {role._count.rolePermissions} permissions
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
+                  return (
+                    <tr key={role.id} className="hover:bg-muted/40 transition-colors">
+                      <td className="px-4 py-3">
+                        <Link
+                          href={`/roles/${role.id}`}
+                          className="font-medium text-foreground hover:text-primary"
+                        >
+                          {role.name}
+                        </Link>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {normalizedDescription
+                            ? normalizedDescription.slice(0, 90) +
+                              (normalizedDescription.length > 90 ? "…" : "")
+                            : "No description"}
+                        </p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            role.isActive
+                              ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                              : "border bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {role.isActive ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {role._count.rolePermissions}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {new Date(role.updatedAt).toLocaleString()}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
       </section>
     </div>
@@ -168,7 +204,7 @@ function StatCard({
   return (
     <Link
       href={href}
-      className="group rounded-xl border bg-card p-5 hover:border-primary/30 hover:bg-primary/[0.03] transition-colors"
+      className="group rounded-xl border bg-card p-5 hover:border-primary/30 hover:bg-primary/3 transition-colors"
     >
       <div className="flex items-start justify-between">
         <div className="rounded-lg border bg-background p-2 text-muted-foreground group-hover:border-primary/20 group-hover:text-primary transition-colors">
@@ -199,7 +235,7 @@ function QuickLink({
   return (
     <Link
       href={href}
-      className="group flex flex-col rounded-xl border bg-card p-5 hover:border-primary/30 hover:bg-primary/[0.03] transition-colors"
+      className="group flex flex-col rounded-xl border bg-card p-5 hover:border-primary/30 hover:bg-primary/3 transition-colors"
     >
       <div className="mb-3">{icon}</div>
       <p className="font-medium">{title}</p>

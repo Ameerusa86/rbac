@@ -58,15 +58,16 @@ export function CreatePermissionDialog({
 
       const { data } = await response.json();
       toast.success(`Permission "${data.displayName}" created for ${systemName}`);
-      
-      // Reset form
+
       setDisplayName("");
       setDescription("");
       setOpen(false);
-      
-      // Refresh page to show new permission
-      onPermissionCreated?.();
-      window.location.reload();
+
+      if (onPermissionCreated) {
+        onPermissionCreated();
+      } else {
+        window.location.reload();
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unknown error occurred";
