@@ -191,6 +191,7 @@ export function RolesTable({ roles, systems, permissions }: RolesTableProps) {
                         permissionIds: role.permissionIds,
                       }}
                       permissions={permissions}
+                      systems={systems}
                     />
                     <DeleteRoleDialog role={{ id: role.id, name: role.name }} />
                   </div>

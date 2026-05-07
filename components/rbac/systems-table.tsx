@@ -21,6 +21,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { SearchInput } from "./search-input";
+import { CreateSystemDialog } from "./create-system-dialog";
+import { CreatePermissionDialog } from "./create-permission-dialog";
 
 type SystemRow = {
   id: number;
@@ -272,14 +274,27 @@ export function SystemsTable({ systems }: SystemsTableProps) {
 
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Systems</h1>
+          <h2 className="text-lg font-semibold tracking-tight">All Systems</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Explore system coverage, permission density, and role adoption.
+            Manage your connected systems and their permissions.
           </p>
         </div>
-        <span className="shrink-0 rounded-full border bg-muted px-3 py-1 text-xs text-muted-foreground">
-          {rows.length} total systems
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="shrink-0 rounded-full border bg-muted px-3 py-1 text-xs text-muted-foreground">
+            {rows.length} total systems
+          </span>
+          <CreateSystemDialog
+            onSystemCreated={(newSystem) => {
+              setRows((cur) => [...cur, {
+                ...newSystem,
+                permissionCount: 0,
+                rolesUsingCount: 0,
+                updatedAt: new Date().toISOString(),
+              }]);
+              toast.success("System created successfully");
+            }}
+          />
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -409,10 +424,16 @@ export function SystemsTable({ systems }: SystemsTableProps) {
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     {system.isActive ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
-                        <CheckCircle2 className="h-3 w-3" />
-                        Active
-                      </span>
+                      <>
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Active
+                        </span>
+                        <CreatePermissionDialog
+                          systemId={system.id}
+                          systemName={system.name}
+                        />
+                      </>
                     ) : (
                       <span className="inline-flex items-center gap-1.5 rounded-full border bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
                         <XCircle className="h-3 w-3" />

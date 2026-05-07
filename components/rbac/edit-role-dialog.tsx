@@ -21,9 +21,10 @@ type EditRoleDialogProps = {
     permissionIds: number[];
   };
   permissions: Permission[];
+  systems: string[];
 };
 
-export function EditRoleDialog({ role, permissions }: EditRoleDialogProps) {
+export function EditRoleDialog({ role, permissions, systems }: EditRoleDialogProps) {
   const router = useRouter();
 
   const [open, setOpen] = useState(false);
@@ -39,18 +40,40 @@ export function EditRoleDialog({ role, permissions }: EditRoleDialogProps) {
 
   const groupedPermissions = useMemo(() => {
     const search = permissionSearch.toLowerCase();
-    return permissions
+    const filtered = permissions
       .filter(
         (p) =>
           p.displayName.toLowerCase().includes(search) ||
           p.systemName.toLowerCase().includes(search),
-      )
-      .reduce<Record<string, Permission[]>>((groups, p) => {
-        if (!groups[p.systemName]) groups[p.systemName] = [];
-        groups[p.systemName].push(p);
-        return groups;
-      }, {});
-  }, [permissions, permissionSearch]);
+      );
+    
+    // Create groups for all systems, including those with no permissions
+    const groups: Record<string, Permission[]> = {};
+    
+    // Initialize all systems
+    systems.forEach((system) => {
+      groups[system] = [];
+    });
+    
+    // Add filtered permissions to their system groups
+    filtered.forEach((p) => {
+      if (!groups[p.systemName]) {
+        groups[p.systemName] = [];
+      }
+      groups[p.systemName].push(p);
+    });
+    
+    // Filter out systems with no permissions if search is active
+    if (search) {
+      Object.keys(groups).forEach((system) => {
+        if (groups[system].length === 0) {
+          delete groups[system];
+        }
+      });
+    }
+    
+    return groups;
+  }, [permissions, permissionSearch, systems]);
 
   function togglePermission(id: number) {
     setSelectedPermissionIds((cur) =>
@@ -154,7 +177,7 @@ export function EditRoleDialog({ role, permissions }: EditRoleDialogProps) {
                     Edit Role
                   </h2>
                   <p
-                    className="mt-1 text-xs text-muted-foreground break-words"
+                    className="mt-1 text-xs text-muted-foreground"
                     title={role.name}
                   >
                     {role.name}
@@ -314,56 +337,66 @@ export function EditRoleDialog({ role, permissions }: EditRoleDialogProps) {
                             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                               {systemName}
                             </p>
-                            <button
-                              type="button"
-                              onClick={() => toggleSystemAll(systemPerms)}
-                              className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium transition-colors ${
-                                allSelected
-                                  ? "text-primary hover:text-primary/70"
-                                  : "text-muted-foreground hover:text-foreground"
-                              }`}
-                            >
-                              <CheckCheck className="h-3 w-3" />
-                              {allSelected
-                                ? "Deselect all"
-                                : someSelected
-                                  ? "Select rest"
-                                  : "Select all"}
-                            </button>
+                            {systemPerms.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => toggleSystemAll(systemPerms)}
+                                className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium transition-colors ${
+                                  allSelected
+                                    ? "text-primary hover:text-primary/70"
+                                    : "text-muted-foreground hover:text-foreground"
+                                }`}
+                              >
+                                <CheckCheck className="h-3 w-3" />
+                                {allSelected
+                                  ? "Deselect all"
+                                  : someSelected
+                                    ? "Select rest"
+                                    : "Select all"}
+                              </button>
+                            )}
                           </div>
 
-                          {/* Permission checkboxes */}
-                          <div className="grid gap-2 lg:grid-cols-2">
-                            {systemPerms.map((p) => {
-                              const checked = selectedPermissionIds.includes(
-                                p.id,
-                              );
-                              return (
-                                <label
-                                  key={p.id}
-                                  className={`flex cursor-pointer items-start gap-2 rounded-lg border px-2.5 py-2 text-sm transition-colors ${
-                                    checked
-                                      ? "border-primary/30 bg-primary/8 text-foreground"
-                                      : "border bg-background text-muted-foreground hover:border-border hover:bg-muted/40 hover:text-foreground"
-                                  }`}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={checked}
-                                    onChange={() => togglePermission(p.id)}
-                                    className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded accent-primary"
-                                  />
-                                  <span
-                                    className="leading-snug break-words"
-                                    style={{ overflowWrap: "anywhere" }}
-                                    title={p.displayName}
+                          {/* Permission checkboxes or empty state */}
+                          {systemPerms.length > 0 ? (
+                            <div className="grid gap-2 lg:grid-cols-2">
+                              {systemPerms.map((p) => {
+                                const checked = selectedPermissionIds.includes(
+                                  p.id,
+                                );
+                                return (
+                                  <label
+                                    key={p.id}
+                                    className={`flex cursor-pointer items-start gap-2 rounded-lg border px-2.5 py-2 text-sm transition-colors ${
+                                      checked
+                                        ? "border-primary/30 bg-primary/8 text-foreground"
+                                        : "border bg-background text-muted-foreground hover:border-border hover:bg-muted/40 hover:text-foreground"
+                                    }`}
                                   >
-                                    {p.displayName}
-                                  </span>
-                                </label>
-                              );
-                            })}
-                          </div>
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      onChange={() => togglePermission(p.id)}
+                                      className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded accent-primary"
+                                    />
+                                    <span
+                                      className="leading-snug"
+                                      style={{ overflowWrap: "anywhere" }}
+                                      title={p.displayName}
+                                    >
+                                      {p.displayName}
+                                    </span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="rounded-lg border border-dashed bg-muted/30 px-3 py-3 text-center">
+                              <p className="text-xs text-muted-foreground">
+                                No permissions available yet
+                              </p>
+                            </div>
+                          )}
                         </div>
                       );
                     },
